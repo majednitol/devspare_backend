@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>File Upload Test</title>
+</head>
+<body>
+    <h1>Upload a File</h1>
+    <form id="uploadForm" action="../api/v1/users/profile-picture.php" method="POST" enctype="multipart/form-data">
+        <label for="fileToUpload">Select file to upload:</label>
+        <input type="file" name="fileToUpload" id="fileToUpload" required>
+        <br><br>
+        <input type="submit" value="Upload File" name="submit">
+    </form>
+
+    <div id="response"></div>
+
+    <script>
+        document.getElementById('uploadForm').onsubmit = function(event) {
+            event.preventDefault(); // Prevent the default form submission
+
+            var formData = new FormData(this);
+            var xhr = new XMLHttpRequest();
+            xhr.open('POST', this.action, true);
+
+            xhr.onload = function () {
+                if (xhr.status === 200) {
+                    document.getElementById('response').innerHTML = xhr.responseText;
+                } else {
+                    document.getElementById('response').innerHTML = 'An error occurred while uploading the file.';
+                }
+            };
+
+            xhr.send(formData); // Send the form data
+        };
+    </script>
+</body>
+</html>
