@@ -51,7 +51,6 @@ class UserController
 
             // Send activation code via email
             sendVerificationEmail($email, $verificationCode);
-            setcookie('activation_token', $activationToken, time() + 300, '/', '', true, true);
             echo json_encode(["message" => "User registered. Please check your email to activate your account.", "activation_token" => $activationToken]);
         }
     }
@@ -70,7 +69,6 @@ class UserController
             if ($code == $expectedCode) {
                 if ($user->createUser()) {
                     echo json_encode(["message" => "Account created successfully."]);
-                    setcookie('activation_token', '', time() - 3600, '/', '', true, true);
 
                     http_response_code(201);
                 } else {
@@ -97,23 +95,8 @@ class UserController
         if ($row && password_verify($password, $row['password'])) {
             $accessToken = generateAccessToken($row);
             $refreshToken = generateRefreshToken($row);
-            setcookie('access_token', $accessToken, [
-                'expires' => time() + 300,
-                'path' => '/',
-                // 'domain' => 'localhost',
-                'secure' => $this->config->node_env == 'production' ? true : false,
-                'httponly' => true,
-                'samesite' => 'None',
-            ]);
-            setcookie('refresh_token', $refreshToken, [
-                'expires' => time() + 604800,
-                'path' => '/api/v1/refesh_token',
-                // 'domain' => 'localhost',
-                'secure' => $this->config->node_env == 'production' ? true : false,
-                'httponly' => true,
-
-            ]);
-            echo json_encode(["message" => "Login successful"]);
+            // echo json_encode(["token" => $jwt]);
+            echo json_encode(["message" => "Login successful",$accessToken,$refreshToken]);
         } else {
             http_response_code(400);
             echo json_encode(["message" => "Invalid email or password."]);
@@ -123,28 +106,6 @@ class UserController
 
     public function logout()
     {
-        session_start();
-        session_unset();
-        session_destroy();
-
-        setcookie('refresh_token', '', [
-            'expires' => time() - 3600,
-            'path' => '/api/v1/refesh_token',
-            // 'domain' => 'localhost',
-            'secure' => $this->config->node_env == 'production' ? true : false,
-            'httponly' => true,
-            'samesite' => 'None',
-        ]);
-        setcookie('access_token','', [
-            'expires' => time() - 3600,
-            'path' => '/',
-            // 'domain' => 'localhost',
-            'secure' => $this->config->node_env == 'production' ? true : false,
-            'httponly' => true,
-            'samesite' => 'None', // Lax , Strict
-        ]);
-
-
         http_response_code(200);
         echo json_encode(["message" => "Logged out successfully."]);
     }
@@ -190,8 +151,16 @@ class UserController
         }
     }
 
-    public function updateAcessToken(): void
+    public function updateAcessToken()
     {
-        refreshAccessToken();
+        // Retrieve the refresh token from the request (e.g., Authorization header or POST body)
+        $refreshToken = $_POST['refresh_token'] ?? null;
+    
+        if ($refreshToken) {
+            refreshAccessToken($refreshToken);
+        } else {
+            http_response_code(400);
+            echo json_encode(["message" => "Refresh token is required."]);
+        }
     }
 }

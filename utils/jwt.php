@@ -5,8 +5,7 @@ use Firebase\JWT\JWT;
 use Firebase\JWT\Key;
 require_once __DIR__ . '/../config/config.php';
 
-
- function generateAccessToken($row)
+function generateAccessToken($row)
 {
     $config = Config::getInstance();
     $payload = [
@@ -20,7 +19,7 @@ require_once __DIR__ . '/../config/config.php';
     return JWT::encode($payload, $config->access_token_secret, "HS256");
 }
 
- function generateRefreshToken($row)
+function generateRefreshToken($row)
 {
     $config = Config::getInstance();
     $payload = [
@@ -34,35 +33,23 @@ require_once __DIR__ . '/../config/config.php';
     return JWT::encode($payload, $config->refresh_token_secret, "HS256");
 }
 
- function refreshAccessToken()
+function refreshAccessToken($refreshToken)
 {
     $config = Config::getInstance();
-    if (isset($_COOKIE['refresh_token'])) {
-        $refreshToken = $_COOKIE['refresh_token'];
-        try {
-            $decoded = JWT::decode($refreshToken, new Key($config->refresh_token_secret, 'HS256'));
-            $newAccessToken = generateAccessToken((array)$decoded);
+    try {
+        $decoded = JWT::decode($refreshToken, new Key($config->refresh_token_secret, 'HS256'));
+        $newAccessToken = generateAccessToken((array)$decoded);
 
-            // setcookie('access_token', $newAccessToken, time() + $config->access_token_expire, '/', '', true, true); // Secure, HTTPOnly
-            setcookie('access_token', $newAccessToken, [
-                'expires' => time() + 300,
-                'path' => '/',
-                // 'domain' => 'localhost',
-                'secure' => false,
-                'httponly' => true,
-                'samesite' => 'None',
-            ]);
-            echo json_encode(["message" => "Access token refreshed successfully"]);
-            http_response_code(200);
-        } catch (ExpiredException $e) {
-            echo json_encode(["message" => "Refresh token has expired. Please log in again."]);
-            http_response_code(401);
-        } catch (Exception $e) {
-            echo json_encode(["message" => "Invalid refresh token."]);
-            http_response_code(401);
-        }
-    } else {
-        echo json_encode(["message" => "No refresh token found."]);
+        echo json_encode([
+            "message" => "Access token refreshed successfully",
+            "access_token" => $newAccessToken
+        ]);
+        http_response_code(200);
+    } catch (ExpiredException $e) {
+        echo json_encode(["message" => "Refresh token has expired. Please log in again."]);
+        http_response_code(401);
+    } catch (Exception $e) {
+        echo json_encode(["message" => "Invalid refresh token."]);
         http_response_code(401);
     }
 }

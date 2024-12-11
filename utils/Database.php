@@ -4,8 +4,8 @@ class Database {
     private $host;  
     private $db_name;
     private $config;
-    private $username; // Update with your database username
-    private $password; // Update with your database password
+    private $username; 
+    private $password;
     public $conn;
     public function __construct()
     {
@@ -27,3 +27,4 @@ class Database {
         return $this->conn;
     }
 }
+ 
